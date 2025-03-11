@@ -1,23 +1,21 @@
-
-
-
 const User = require('../models/userModel');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
-// Get user profile
 const getUserProfile = async (req, res) => {
     try {
-        const user = await User.findById(req.userId).select('-password'); 
+        const user = await User.findById(req.userId).select('-password');
+        console.log('Fetched user:', user); // سجل بيانات المستخدم المسترجعة
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
         res.json({ username: user.username, email: user.email });
     } catch (error) {
-        console.error(error);
+        console.error('Error in getUserProfile:', error);
         res.status(500).json({ message: 'Server error' });
     }
 };
+
 
 // Register user
 const registerUser = async (req, res) => {
@@ -48,7 +46,7 @@ const loginUser = async (req, res) => {
         if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-        
+
         res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
         res.status(200).json({ message: 'Logged in successfully' });
     } catch (err) {
@@ -56,9 +54,16 @@ const loginUser = async (req, res) => {
     }
 };
 
+// Logout user
+const logoutUser = (req, res) => {
+    res.clearCookie('token'); // Clear cookie on logout
+    res.status(200).json({ message: 'Logged out successfully' });
+};
+
 // Export all functions at once
 module.exports = {
     getUserProfile,
     registerUser,
-    loginUser
+    loginUser,
+    logoutUser
 };
